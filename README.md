@@ -1,7 +1,13 @@
 # kobo2suso
-Converter of questionnaires from Kobo to Survey Solutions.
+Converter of questionnaires from Kobo Toolbox to Survey Solutions.
 
 Sergiy Radyakin, Thе Wоrld Bаnk, 2021.
+
+### Links to products
+
+* Kobo Toolbox homepage: https://www.kobotoolbox.org/
+* Survey Solutions homepage: https://mysurvey.solutions
+
 
 ### Python Syntax
 
@@ -21,7 +27,7 @@ koboConvert("kobo.xlsx","suso.json")
 - Sections/sub-sections transferred. Repetitions not supported.
 - Notes are transferred as static texts;
 - Question texts - transferred for some* question types;
-- Variable names - transferred for some* question types;
+- Variable names - transferred for some* question types, not validated against Survey Solutions requirements;
 - Hints - transferred as instructions for some* question types;
 - Text substitution placeholders are transferred, for example: "*How old is ${name}?*" will appear as "*How old is %name%?*"
 - Categories of single select questions - not transferred;
