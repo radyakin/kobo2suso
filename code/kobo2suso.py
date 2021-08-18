@@ -55,10 +55,10 @@ def processgroup(ws, name, title):
         # // note maps to static text
         T=susoqx.gettext(koboText)
         C.append(T)
-      if (koboType1 in ["text","integer","select_one"]):
+      if (koboType1 in ["text", "integer", "select_one", "date"]):
         # // text maps to TextQuestion
         C.append(susoqx.getquestion(koboType1,koboName,koboText,koboHint))
-      if (not(koboType1 in ["end_group", "begin_group", "note", "text", "integer", "select_one"])):
+      if (not(koboType1 in ["end_group", "begin_group", "note", "text", "integer", "select_one", "date"])):
         print("Encountered an unknown type: "+koboType1+", skipping")
 
   G['Children']=C

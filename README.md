@@ -3,10 +3,6 @@ Converter of questionnaires from Kobo Toolbox to Survey Solutions.
 
 Sergiy Radyakin, Thе Wоrld Bаnk, 2021.
 
-### Links to products
-
-* Kobo Toolbox homepage: https://www.kobotoolbox.org/
-* Survey Solutions homepage: https://mysurvey.solutions
 
 
 ### Python Syntax
@@ -36,9 +32,26 @@ koboConvert("kobo.xlsx","suso.json")
 - Calculated variables - not transferred (skipped).
 - Formatting - not transferred (not clear if supported in original files.)
 
+##### **Question types**:
+- Text (*"text"*)
+- Numeric (*"integer"*)
+- Single-select (*"select_one"*)
+- Date (*"date"*)
 
 
-##### ***Question types**:
-- Text
-- Numeric
-- Single-select
+### No-equivalent
+
+It appears at the moment that the following attributes in the source format do not have an equivalent attribute in the destination format:
+
+- read-only;
+- required;
+- default.
+
+### Useful Links to Products and Standards
+
+* Kobo Toolbox homepage: https://www.kobotoolbox.org/
+* Survey Solutions homepage: https://mysurvey.solutions
+
+* Description of XLSForms standard: https://xlsform.org/
+* ESRI description of XLSForms as implemented in ArcGIS Survey123: https://doc.arcgis.com/en/survey123/desktop/create-surveys/xlsformessentials.htm
+* ODK import to Stata by Matthew White: http://fmwww.bc.edu/RePEc/bocode/o/odkmeta.sthlp

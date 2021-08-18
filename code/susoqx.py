@@ -104,6 +104,9 @@ def getquestion(typ,vname,qtext,hint):
       Q['QuestionType']=0
       Q['ShowAsList']=False
       Q['IsFilteredCombobox']=False
+    if (typ=="date"):
+      Q['$type']="DateTimeQuestion"
+      Q['QuestionType']=5
     return Q
 
 
