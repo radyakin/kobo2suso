@@ -98,7 +98,13 @@ def getquestion(typ,vname,qtext,hint):
       Q['QuestionType']=4
       Q['IsInteger']=True
       Q['UseFormatting']=True #//perhaps this is thousands delimiter?
-      Q['Order']=2
+      Q['Order']=2            #// unknown, suspected ineffective
+    if (typ=="decimal"):
+      Q['$type']="NumericQuestion"
+      Q['QuestionType']=4
+      Q['IsInteger']=False
+      Q['UseFormatting']=False #//perhaps this is thousands delimiter?
+      Q['Order']=2             #// unknown, suspected ineffective
     if (typ=="select_one"):
       Q['$type']="SingleQuestion"
       Q['QuestionType']=0

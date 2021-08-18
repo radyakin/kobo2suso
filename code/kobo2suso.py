@@ -4,19 +4,27 @@ import susoqx, json
 from openpyxl import load_workbook
 
 global i
+global filemap
+
 i=1
+filemap={}
+filemap["type"]=3
+filemap["name"]=4
+filemap["text"]=5
+filemap["hint"]=6
 
 def processgroup(ws, name, title):
   global i
+
   G=susoqx.getgroup(title) # // todo: must also pass name
   C=[]
 
   empty=0
   while (empty<2):
-    koboType=ws.cell(column=3,row=i).value
-    koboName=ws.cell(column=4,row=i).value
-    koboText=ws.cell(column=5,row=i).value
-    koboHint=ws.cell(column=6,row=i).value
+    koboType=ws.cell(column=filemap["type"],row=i).value # "type"
+    koboName=ws.cell(column=filemap["name"],row=i).value # "name"
+    koboText=ws.cell(column=filemap["text"],row=i).value # "label", "label::English", etc
+    koboHint=ws.cell(column=filemap["hint"],row=i).value # "hint", "hint::English", etc
 
     i=i+1
 
@@ -55,10 +63,10 @@ def processgroup(ws, name, title):
         # // note maps to static text
         T=susoqx.gettext(koboText)
         C.append(T)
-      if (koboType1 in ["text", "integer", "select_one", "date"]):
+      if (koboType1 in ["text", "integer", "decimal", "select_one", "date"]):
         # // text maps to TextQuestion
         C.append(susoqx.getquestion(koboType1,koboName,koboText,koboHint))
-      if (not(koboType1 in ["end_group", "begin_group", "note", "text", "integer", "select_one", "date"])):
+      if (not(koboType1 in ["end_group", "begin_group", "note", "text", "integer", "decimal", "select_one", "date"])):
         print("Encountered an unknown type: "+koboType1+", skipping")
 
   G['Children']=C

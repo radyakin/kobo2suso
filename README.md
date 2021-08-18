@@ -34,7 +34,7 @@ koboConvert("kobo.xlsx","suso.json")
 
 ##### **Question types**:
 - Text (*"text"*)
-- Numeric (*"integer"*)
+- Numeric (*"integer"*, *"decimal"*)
 - Single-select (*"select_one"*)
 - Date (*"date"*)
 
