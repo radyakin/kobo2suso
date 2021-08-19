@@ -68,7 +68,7 @@ def getbasequestion(typ,vname,qtext,hint):
         hint=""
     Q={}
     Q['$type']="UnknownQuestion"
-    Q['s']=[]
+    Q['Answers']=[]
     Q['Children']=[]
     Q['ConditionExpression']=""
     Q['HideIfDisabled']=False
@@ -91,26 +91,31 @@ def getquestion(typ,vname,qtext,hint):
     # Proto for a question (specific)
     Q=getbasequestion("Z",vname,qtext,hint)
     if (typ=="text"):
+      # 	Free text response
       Q['$type']="TextQuestion"
       Q['QuestionType']=7 # // TextQuestion
     if (typ=="integer"):
+      # 	Integer (i.e., whole number) input.
       Q['$type']="NumericQuestion"
       Q['QuestionType']=4
       Q['IsInteger']=True
       Q['UseFormatting']=True #//perhaps this is thousands delimiter?
       Q['Order']=2            #// unknown, suspected ineffective
     if (typ=="decimal"):
+      # Decimal input.
       Q['$type']="NumericQuestion"
       Q['QuestionType']=4
       Q['IsInteger']=False
       Q['UseFormatting']=False #//perhaps this is thousands delimiter?
       Q['Order']=2             #// unknown, suspected ineffective
     if (typ=="select_one"):
+      # Multiple choice question; only one answer can be selected.
       Q['$type']="SingleQuestion"
       Q['QuestionType']=0
       Q['ShowAsList']=False
       Q['IsFilteredCombobox']=False
     if (typ=="date"):
+      # 	Date input.
       Q['$type']="DateTimeQuestion"
       Q['QuestionType']=5
     return Q
