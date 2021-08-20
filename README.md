@@ -34,6 +34,7 @@ koboConvert("kobo.xlsx","suso.zip")
 - Multiple-select (*"select_multiple"*)
 - Date (*"date"*)
 - Image (*"image"* and *"image signature"*) (untested)
+- GPS location (*"geopoint"*)
 
 ### No-equivalent
 
@@ -49,5 +50,6 @@ It appears at the moment that the following attributes in the source format do n
 * Survey Solutions homepage: https://mysurvey.solutions
 
 * Description of XLSForms standard: https://xlsform.org/
+* XLSForms reference table: https://xlsform.org/en/ref-table/
 * ESRI description of XLSForms as implemented in ArcGIS Survey123: https://doc.arcgis.com/en/survey123/desktop/create-surveys/xlsformessentials.htm
 * ODK import to Stata by Matthew White: http://fmwww.bc.edu/RePEc/bocode/o/odkmeta.sthlp

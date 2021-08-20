@@ -65,6 +65,8 @@ def getgroup(title):
 def getbasequestion(typ,vname,qtext,hint):
     # Proto for a question (generic)
     # // todo: validate variable name. Replace to something valid if starts with an underscore, etc.
+    if (len(vname)>32):
+        print("ALERT! Variable name is too long! ["+vname+"]")
     if (hint==None):
         hint=""
     Q={}
@@ -131,7 +133,11 @@ def getquestion(kobo):
       Q['$type']="MultimediaQuestion"
       Q['QuestionType']=11
       Q['IsSignature']="signature" in tokens
-
+    if (kobo['type1']=="geopoint"):
+      # Collect a single GPS coordinate.
+      tokens=kobo['appearance'].split(" ")
+      Q['$type']="GpsCoordinateQuestion"
+      Q['QuestionType']=6
     return Q
 
 

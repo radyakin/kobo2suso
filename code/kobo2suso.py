@@ -182,6 +182,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
     i=i+1
 
     kobo['text']=susoqx.adaptsubst(kobo['text'])
+    kobo['hint']=susoqx.adaptsubst(kobo['hint'])
 
     if (kobo['type']==None or kobo['type']==""):
       if (empty==1):
@@ -221,11 +222,11 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         selectQ['CategoriesId']=postcategories(kobofile,kobo['type2'],stagefolder)
         C.append(selectQ)
 
-      if (kobo['type1'] in ["text", "integer", "decimal", "date", "image"]):
+      if (kobo['type1'] in ["text", "integer", "decimal", "date", "image", "geopoint"]):
         C.append(susoqx.getquestion(kobo))
 
       if (not(kobo['type1'] in ["end_group", "begin_group", "note", "text",
-      "integer", "decimal", "select_one", "select_multiple", "date", "image"])):
+      "integer", "decimal", "select_one", "select_multiple", "date", "image", "geopoint"])):
         print("!  >>>>>> Encountered an unknown type: "+kobo['type1']+", skipping")
 
   G['Children']=C
