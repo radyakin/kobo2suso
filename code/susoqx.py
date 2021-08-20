@@ -87,7 +87,7 @@ def getbasequestion(typ,vname,qtext,hint):
     return Q
 
 
-def getquestion(typ,vname,qtext,hint):
+def getquestion(typ,vname,qtext,hint,appearance):
     # Proto for a question (specific)
     Q=getbasequestion("Z",vname,qtext,hint)
     if (typ=="text"):
@@ -118,6 +118,13 @@ def getquestion(typ,vname,qtext,hint):
       # 	Date input.
       Q['$type']="DateTimeQuestion"
       Q['QuestionType']=5
+    if (typ=="image"):
+      # 	Take a picture or upload an image file.
+      tokens=appearance.split(" ")
+      Q['$type']="MultimediaQuestion"
+      Q['QuestionType']=11
+      Q['IsSignature']="signature" in tokens
+
     return Q
 
 

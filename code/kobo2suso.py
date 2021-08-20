@@ -15,6 +15,7 @@ filemap["type"]=-1
 filemap["name"]=-1
 filemap["text"]=-1
 filemap["hint"]=-1
+filemap["appearance"]=-1
 catdict={}
 
 def buildfilemap(ws, lng):
@@ -46,6 +47,9 @@ def buildfilemap(ws, lng):
       if (filemap["hint"]==-1 and c=="hint"+sfx or(c.startswith("hint:") and sfx=="")):
           filemap["hint"]=j
           print("Located HINT in column "+str(j))
+      if (filemap["appearance"]==-1 and c=="appearance"):
+          filemap["appearance"]=j
+          print("Located APPEARANCE in column "+str(j))
 
 def is_number(s):
     try:
@@ -134,9 +138,18 @@ def processgroup(kobofile, ws, name, title, stagefolder):
     koboType=ws.cell(column=filemap["type"],row=i).value # "type"
     koboName=ws.cell(column=filemap["name"],row=i).value # "name"
     koboText=ws.cell(column=filemap["text"],row=i).value # "label", "label::English", etc
+
     koboHint=""
     if (filemap["hint"]>0):
       koboHint=ws.cell(column=filemap["hint"],row=i).value # "hint", "hint::English", etc
+      if (koboHint==None):
+          koboHint=""
+
+    koboAppearance=""
+    if (filemap["appearance"]>0):
+      koboHint=ws.cell(column=filemap["appearance"],row=i).value # "signature", etc
+      if (koboAppearance==None):
+          koboAppearance=""
 
     i=i+1
 
@@ -184,15 +197,15 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         if (koboType2==""):
             print("Error! Expected categories name for "+koboName)
             return
-        singleQ=susoqx.getquestion(koboType1,koboName,koboText,koboHint)
+        singleQ=susoqx.getquestion(koboType1,koboName,koboText,koboHint,koboAppearance)
         singleQ['CategoriesId']=postcategories(kobofile,koboType2,stagefolder)
         C.append(singleQ)
 
-      if (koboType1 in ["text", "integer", "decimal", "date"]):
-        C.append(susoqx.getquestion(koboType1,koboName,koboText,koboHint))
+      if (koboType1 in ["text", "integer", "decimal", "date", "image"]):
+        C.append(susoqx.getquestion(koboType1,koboName,koboText,koboHint,koboAppearance))
 
       if (not(koboType1 in ["end_group", "begin_group", "note", "text",
-      "integer", "decimal", "select_one", "date"])):
+      "integer", "decimal", "select_one", "date", "image"])):
         print("Encountered an unknown type: "+koboType1+", skipping")
 
   G['Children']=C

@@ -32,7 +32,7 @@ koboConvert("kobo.xlsx","suso.zip")
 - Numeric (*"integer"*, *"decimal"*)
 - Single-select (*"select_one"*)
 - Date (*"date"*)
-
+- Image (*"image"* and *"image signature"*) (untested)
 
 ### No-equivalent
 
