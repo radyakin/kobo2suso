@@ -84,6 +84,7 @@ def writecategories(kobofile, choiceset, susofile):
   # KOBO: list_name, name, label
   kobo = load_workbook(filename = kobofile)
   kobosheet = kobo["choices"] # must be this specific name according to the format
+  # a file has been spotted in the wild where "list_name" was specified as "list name"
   assert(kobosheet.cell(column=1, row=1).value=="list_name")
   assert(kobosheet.cell(column=2, row=1).value=="name")
   assert(
@@ -137,6 +138,8 @@ def processgroup(kobofile, ws, name, title, stagefolder):
   while (empty<2):
     koboType=ws.cell(column=filemap["type"],row=i).value # "type"
     koboName=ws.cell(column=filemap["name"],row=i).value # "name"
+    if (koboName==None):
+        koboName=""
     koboText=ws.cell(column=filemap["text"],row=i).value # "label", "label::English", etc
 
     koboHint=""
@@ -147,7 +150,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
 
     koboAppearance=""
     if (filemap["appearance"]>0):
-      koboHint=ws.cell(column=filemap["appearance"],row=i).value # "signature", etc
+      koboAppearance=ws.cell(column=filemap["appearance"],row=i).value # "signature", etc
       if (koboAppearance==None):
           koboAppearance=""
 
@@ -180,6 +183,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
       # // calculate =>
       # // today, start, end, deviceid << system variables
       if (koboType1=="end_group"):
+        # a file has been spotted in the wild where "end_group" is not accompanied by the group name
         break # // end of current group
 
       if (koboType1=="begin_group"):
@@ -193,19 +197,19 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         # Display a note on the screen, takes no input.
         T=susoqx.gettext(koboText)
         C.append(T)
-      if (koboType1=="select_one"):
+      if (koboType1=="select_one" or koboType1=="select_multiple"):
         if (koboType2==""):
             print("Error! Expected categories name for "+koboName)
             return
-        singleQ=susoqx.getquestion(koboType1,koboName,koboText,koboHint,koboAppearance)
-        singleQ['CategoriesId']=postcategories(kobofile,koboType2,stagefolder)
-        C.append(singleQ)
+        selectQ=susoqx.getquestion(koboType1,koboName,koboText,koboHint,koboAppearance)
+        selectQ['CategoriesId']=postcategories(kobofile,koboType2,stagefolder)
+        C.append(selectQ)
 
       if (koboType1 in ["text", "integer", "decimal", "date", "image"]):
         C.append(susoqx.getquestion(koboType1,koboName,koboText,koboHint,koboAppearance))
 
       if (not(koboType1 in ["end_group", "begin_group", "note", "text",
-      "integer", "decimal", "select_one", "date", "image"])):
+      "integer", "decimal", "select_one", "select_multiple", "date", "image"])):
         print("Encountered an unknown type: "+koboType1+", skipping")
 
   G['Children']=C
@@ -221,7 +225,7 @@ def koboConvert(koboname, susoname):
   buildfilemap(ws, "") # for the moment always take first language
 
   i=1
-  if (ws.cell(column=3,row=i).value!="type"):
+  if (ws.cell(column=filemap["type"],row=i).value!="type"):
     print(">>> ERROR")
     return
   print(">>> OK")

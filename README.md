@@ -21,7 +21,7 @@ koboConvert("kobo.xlsx","suso.zip")
 - Variable names - transferred for some* question types, not validated against Survey Solutions requirements;
 - Hints - transferred as instructions for some* question types;
 - Text substitution placeholders are transferred, for example: "*How old is ${name}?*" will appear as "*How old is %name%?*"
-- Categories of single select questions - tentatively supported (if numeric, for non-numeric categories new numeric codes will be assigned); If there are more than 200 categories, may need to switch to combobox presentation in Survey Solutions (compiler will tell that).
+- Categories of single-select and multiple-select questions - tentatively supported (if numeric, for non-numeric categories new numeric codes will be assigned); If there are more than 200 categories, may need to switch to combobox presentation in Survey Solutions (compiler will tell that).
 - Relevance (enabling) conditions - not transferred;
 - Restriction (validation) conditions - not transferred;
 - Calculated variables - not transferred (skipped).
@@ -31,6 +31,7 @@ koboConvert("kobo.xlsx","suso.zip")
 - Text (*"text"*)
 - Numeric (*"integer"*, *"decimal"*)
 - Single-select (*"select_one"*)
+- Multiple-select (*"select_multiple"*)
 - Date (*"date"*)
 - Image (*"image"* and *"image signature"*) (untested)
 

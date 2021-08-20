@@ -91,11 +91,11 @@ def getquestion(typ,vname,qtext,hint,appearance):
     # Proto for a question (specific)
     Q=getbasequestion("Z",vname,qtext,hint)
     if (typ=="text"):
-      # 	Free text response
+      # Free text response
       Q['$type']="TextQuestion"
       Q['QuestionType']=7 # // TextQuestion
     if (typ=="integer"):
-      # 	Integer (i.e., whole number) input.
+      # Integer (i.e., whole number) input.
       Q['$type']="NumericQuestion"
       Q['QuestionType']=4
       Q['IsInteger']=True
@@ -114,12 +114,18 @@ def getquestion(typ,vname,qtext,hint,appearance):
       Q['QuestionType']=0
       Q['ShowAsList']=False
       Q['IsFilteredCombobox']=False
+    if (typ=="select_multiple"):
+      # Multiple choice question; multiple answers can be selected.
+      Q['$type']="MultyOptionsQuestion"
+      Q['QuestionType']=3
+      Q['AreAnswersOrdered']=False
+      Q['YesNoView']=False
     if (typ=="date"):
-      # 	Date input.
+      # Date input.
       Q['$type']="DateTimeQuestion"
       Q['QuestionType']=5
     if (typ=="image"):
-      # 	Take a picture or upload an image file.
+      # Take a picture or upload an image file.
       tokens=appearance.split(" ")
       Q['$type']="MultimediaQuestion"
       Q['QuestionType']=11
