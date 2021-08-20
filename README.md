@@ -3,7 +3,7 @@ Converter of questionnaires from Kobo Toolbox to Survey Solutions.
 
 Sergiy Radyakin, Thе Wоrld Bаnk, 2021.
 
-
+![](kobo2suso.jpg)
 
 ### Python Syntax
 
