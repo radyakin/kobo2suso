@@ -11,11 +11,41 @@ global catdict
 
 i=1
 filemap={}
-filemap["type"]=3
-filemap["name"]=4
-filemap["text"]=5
-filemap["hint"]=6
+filemap["type"]=-1
+filemap["name"]=-1
+filemap["text"]=-1
+filemap["hint"]=-1
 catdict={}
+
+def buildfilemap(ws, lng):
+    # scan the first line of the worksheet to determine indices for specific columns
+    # lng may be specified or left blank
+    # if lng is specified, it must match exactly the suffix after ::
+    # if lng is not specified, it will take the first suitable column matching the pattern.
+    # this may cause misalignment, such as in case where the columns are interleaved:
+    # label::ru, label::fr, hint::fr, hint::ru
+    if (lng==None):
+        lng=""
+    sfx=""
+    if (lng!=""):
+        sfx="::"+lng
+
+    for j in range(1,255):
+      c=ws.cell(column=j, row=1).value
+      if (c==None):
+          c=""
+      if (filemap["type"]==-1 and c=="type"):
+          filemap["type"]=j
+          print("Located TYPE in column "+str(j))
+      if (filemap["name"]==-1 and c=="name"):
+          filemap["name"]=j
+          print("Located NAME in column "+str(j))
+      if (filemap["text"]==-1 and c=="label"+sfx or (c.startswith("label:") and sfx=="")):
+          filemap["text"]=j
+          print("Located TEXT in column "+str(j))
+      if (filemap["hint"]==-1 and c=="hint"+sfx or(c.startswith("hint:") and sfx=="")):
+          filemap["hint"]=j
+          print("Located HINT in column "+str(j))
 
 def is_number(s):
     try:
@@ -174,6 +204,9 @@ def koboConvert(koboname, susoname):
   wb = load_workbook(filename = koboname)
   ws = wb.active
   print(ws.title)
+
+  buildfilemap(ws, "") # for the moment always take first language
+
   i=1
   if (ws.cell(column=3,row=i).value!="type"):
     print(">>> ERROR")
