@@ -8,6 +8,7 @@ import susoqx
 global i
 global filemap
 global catdict
+global _verbose
 
 i=1
 filemap={}
@@ -17,6 +18,7 @@ filemap["text"]=-1
 filemap["hint"]=-1
 filemap["appearance"]=-1
 catdict={}
+_verbose=False
 
 def buildfilemap(ws, lng):
     # scan the first line of the worksheet to determine indices for specific columns
@@ -66,7 +68,10 @@ def is_integer(s):
     return True
 
 def postcategories(kobofile, choiceset, stagefolder):
-    print("Categories: "+choiceset)
+
+    if (_verbose):
+      print(" -- Categories: "+choiceset)
+
     if (choiceset in catdict):
         return catdict[choiceset]
     # new categories, need to export
@@ -75,7 +80,6 @@ def postcategories(kobofile, choiceset, stagefolder):
     f=f.replace("-","")
     fn=os.path.join(stagefolder, "Categories", f+".xlsx")
     writecategories(kobofile, choiceset, fn)
-    #"C:/temp/kobo/out/Categories/"+f+".xlsx"
     catdict[choiceset]=fcopy
     return fcopy
 
@@ -92,7 +96,8 @@ def writecategories(kobofile, choiceset, susofile):
     or
     kobosheet.cell(column=3, row=1).value[0:7]=="label::"
   )
-  print("Writing to: "+susofile)
+  if (_verbose):
+    print(" -- Writing to: "+susofile)
   suso=Workbook()
   susosheet = suso.active
   susosheet.title = "Categories" # must be this specific name according to the format
@@ -117,7 +122,7 @@ def writecategories(kobofile, choiceset, susofile):
       else:
           empty=0
           if (listname==choiceset):
-              print(name, label)
+              #print(name, label)
               if (not is_integer(name)):
                   label=label+" ["+name+"]"
                   name=newcode
@@ -128,6 +133,43 @@ def writecategories(kobofile, choiceset, susofile):
       koborow=koborow+1
   suso.save(filename = susofile)
 
+def getkoboline(ws,i):
+    kobo={}
+
+    kobo['type']=ws.cell(column=filemap["type"],row=i).value # "type"
+    if (kobo['type']==None):
+      kobo['type']=""
+
+    kobosplit=kobo['type'].split()
+    kobo['type1']=""
+    if (len(kobosplit)>0):
+      kobo['type1']=kobosplit[0]
+    kobo['type2']=""
+    if (len(kobosplit)>1):
+      kobo['type2']=kobosplit[1]
+
+    kobo['name']=ws.cell(column=filemap["name"],row=i).value # "name"
+    if (kobo['name']==None):
+      kobo['name']=""
+
+    kobo['text']=ws.cell(column=filemap["text"],row=i).value # "label", "label::English", etc
+    if (kobo['text']==None):
+      kobo['text']=""
+
+    kobo['hint']=""
+    if (filemap["hint"]>0):
+      kobo['hint']=ws.cell(column=filemap["hint"],row=i).value # "hint", "hint::English", etc
+      if (kobo['hint']==None):
+          kobo['hint']=""
+
+    kobo['appearance']=""
+    if (filemap["appearance"]>0):
+      kobo['appearance']=ws.cell(column=filemap["appearance"],row=i).value # "signature", etc
+      if (kobo['appearance']==None):
+          kobo['appearance']=""
+    return kobo
+
+
 def processgroup(kobofile, ws, name, title, stagefolder):
   global i
 
@@ -136,81 +178,55 @@ def processgroup(kobofile, ws, name, title, stagefolder):
 
   empty=0
   while (empty<2):
-    koboType=ws.cell(column=filemap["type"],row=i).value # "type"
-    koboName=ws.cell(column=filemap["name"],row=i).value # "name"
-    if (koboName==None):
-        koboName=""
-    koboText=ws.cell(column=filemap["text"],row=i).value # "label", "label::English", etc
-
-    koboHint=""
-    if (filemap["hint"]>0):
-      koboHint=ws.cell(column=filemap["hint"],row=i).value # "hint", "hint::English", etc
-      if (koboHint==None):
-          koboHint=""
-
-    koboAppearance=""
-    if (filemap["appearance"]>0):
-      koboAppearance=ws.cell(column=filemap["appearance"],row=i).value # "signature", etc
-      if (koboAppearance==None):
-          koboAppearance=""
-
+    kobo=getkoboline(ws,i)
     i=i+1
 
-    if (koboText==None):
-      koboText=""
+    kobo['text']=susoqx.adaptsubst(kobo['text'])
 
-    koboText=susoqx.adaptsubst(koboText)
-
-    if (koboType==None):
+    if (kobo['type']==None or kobo['type']==""):
       if (empty==1):
         break
       else:
         empty=empty+1
     else:
       empty=0
+      pfx="   "
+      if (kobo['type1']=="begin_group"):
+        print("------------------------------------------------------------")
+        pfx=""
 
-      kobosplit=koboType.split()
-      koboType1=kobosplit[0]
-      koboType2=""
-      if (len(kobosplit)>1):
-          koboType2=kobosplit[1]
-      print(koboType1 + "       " + koboName + "      " + koboText)
-      # // note => StaticText
-      # // begin_group => SubSection
-      # // text => TextQuestion
-      # // integer =>
-      # // select_one =>
-      # // calculate =>
-      # // today, start, end, deviceid << system variables
-      if (koboType1=="end_group"):
+      print(pfx + kobo['type1'].ljust(20) + "  " + kobo['name'].ljust(28) + "  " + kobo['text'])
+
+      if (kobo['type1']=="end_group"):
         # a file has been spotted in the wild where "end_group" is not accompanied by the group name
         break # // end of current group
 
-      if (koboType1=="begin_group"):
+      if (kobo['type1']=="begin_group"):
         # // encountered a nested group
-        print(koboName)
-        Z=processgroup(kobofile, ws, koboName, koboText, stagefolder)
+        # print(kobo['name'])
+        Z=processgroup(kobofile, ws, kobo['name'], kobo['text'], stagefolder)
         C.append(Z)
 
-      if (koboType1=="note"):
+      if (kobo['type1']=="note"):
         # // note maps to static text
         # Display a note on the screen, takes no input.
-        T=susoqx.gettext(koboText)
+        T=susoqx.gettext(kobo['text'])
         C.append(T)
-      if (koboType1=="select_one" or koboType1=="select_multiple"):
-        if (koboType2==""):
-            print("Error! Expected categories name for "+koboName)
+
+      if (kobo['type1']=="select_one" or kobo['type1']=="select_multiple"):
+        if (kobo['type2']==""):
+            print("Error! Expected categories name for "+kobo['name'])
             return
-        selectQ=susoqx.getquestion(koboType1,koboName,koboText,koboHint,koboAppearance)
-        selectQ['CategoriesId']=postcategories(kobofile,koboType2,stagefolder)
+        selectQ=susoqx.getquestion(kobo)
+        selectQ['CategoriesId']=postcategories(kobofile,kobo['type2'],stagefolder)
         C.append(selectQ)
 
-      if (koboType1 in ["text", "integer", "decimal", "date", "image"]):
-        C.append(susoqx.getquestion(koboType1,koboName,koboText,koboHint,koboAppearance))
+      if (kobo['type1'] in ["text", "integer", "decimal", "date", "image"]):
+        C.append(susoqx.getquestion(kobo))
 
-      if (not(koboType1 in ["end_group", "begin_group", "note", "text",
+      if (not(kobo['type1'] in ["end_group", "begin_group", "note", "text",
       "integer", "decimal", "select_one", "select_multiple", "date", "image"])):
-        print("Encountered an unknown type: "+koboType1+", skipping")
+        print("Encountered an unknown type: "+kobo['type1']+", skipping")
 
   G['Children']=C
   return G

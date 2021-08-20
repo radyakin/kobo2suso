@@ -1,5 +1,5 @@
 # Sergiy Radyakin, The World Bank, 2021
-import json, uuid, re
+import datetime, json, uuid, re
 
 
 def getguid():
@@ -25,10 +25,11 @@ def getqx(varname):
     X['Title']=varname
     X['Description']=varname
     X['VariableName']=varname
-    X['CreationDate']="2020-01-25T00:40:07.4256211"
-    X['LastEntryDate']="2020-01-25T00:40:18.3195535"
+    dt=datetime.datetime.utcnow().isoformat()
+    X['CreationDate']=dt
+    X['LastEntryDate']=dt
     X['IsDeleted']=False
-    X['CreatedBy']="37b91a5c-9b21-45f7-bb2c-9d50c76569f0"
+    X['CreatedBy']="44444444-4444-4444-4444-444444444444"
     X['IsPublic']=False
     X['Macros']={}
     X['LookupTables']={}
@@ -87,46 +88,46 @@ def getbasequestion(typ,vname,qtext,hint):
     return Q
 
 
-def getquestion(typ,vname,qtext,hint,appearance):
+def getquestion(kobo):
     # Proto for a question (specific)
-    Q=getbasequestion("Z",vname,qtext,hint)
-    if (typ=="text"):
+    Q=getbasequestion("Z",kobo['name'],kobo['text'],kobo['hint'])
+    if (kobo['type1']=="text"):
       # Free text response
       Q['$type']="TextQuestion"
       Q['QuestionType']=7 # // TextQuestion
-    if (typ=="integer"):
+    if (kobo['type1']=="integer"):
       # Integer (i.e., whole number) input.
       Q['$type']="NumericQuestion"
       Q['QuestionType']=4
       Q['IsInteger']=True
       Q['UseFormatting']=True #//perhaps this is thousands delimiter?
       Q['Order']=2            #// unknown, suspected ineffective
-    if (typ=="decimal"):
+    if (kobo['type1']=="decimal"):
       # Decimal input.
       Q['$type']="NumericQuestion"
       Q['QuestionType']=4
       Q['IsInteger']=False
       Q['UseFormatting']=False #//perhaps this is thousands delimiter?
       Q['Order']=2             #// unknown, suspected ineffective
-    if (typ=="select_one"):
+    if (kobo['type1']=="select_one"):
       # Multiple choice question; only one answer can be selected.
       Q['$type']="SingleQuestion"
       Q['QuestionType']=0
       Q['ShowAsList']=False
       Q['IsFilteredCombobox']=False
-    if (typ=="select_multiple"):
+    if (kobo['type1']=="select_multiple"):
       # Multiple choice question; multiple answers can be selected.
       Q['$type']="MultyOptionsQuestion"
       Q['QuestionType']=3
       Q['AreAnswersOrdered']=False
       Q['YesNoView']=False
-    if (typ=="date"):
+    if (kobo['type1']=="date"):
       # Date input.
       Q['$type']="DateTimeQuestion"
       Q['QuestionType']=5
-    if (typ=="image"):
+    if (kobo['type1']=="image"):
       # Take a picture or upload an image file.
-      tokens=appearance.split(" ")
+      tokens=kobo['appearance'].split(" ")
       Q['$type']="MultimediaQuestion"
       Q['QuestionType']=11
       Q['IsSignature']="signature" in tokens
@@ -146,16 +147,30 @@ def gettext(title):
     T['ValidationConditions']=[]
     T['ConditionExpression']=""
     T['HideIfDisabled']=False
-    print(T)
     return T
 
+
+def removeCRLF(s):
+    s=s.strip()
+    result=s.replace("\r"," ")
+    result=result.replace("\n"," ")
+    g=result.replace("  "," ")
+    while (g!=result.replace("  "," ")):
+       g=result.replace("  "," ")
+    return g
 
 def adaptsubst(s):
     # Use regular expressions to locate and adapt the substitution placeholders.
     # Anything resembling ${something} will be replaced with %something%
+    s=removeCRLF(s)
     result = re.findall('\$\{.*?\}', s)
     for t in result:
         s=s.replace(t,"%"+t[2:-1]+"%")
+    if (len(s)>500):
+        print("!!! WARNING, CONTENT TRUNCATED !!!")
+        s=s[0:499]
+        # todo: make truncation aware of substitution, not to expose
+        #       substitution placeholder carelessly if it falls on the boundary.
     return s
 
 
