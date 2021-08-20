@@ -44,6 +44,23 @@ It appears at the moment that the following attributes in the source format do n
 - required;
 - default.
 
+### Compatible Products
+
+According to [xlsforms.org](https://xlsform.org/en/#tools-that-support-xlsforms) the tools that support XLSForms:
+
+* CommCare
+* ODK
+* Enketo
+* Tattara
+* DataWinners
+* Ona
+* Community Health Toolkit
+* SurveyCTO
+* Secure Data Kit (SDK)
+* KoBoToolBox
+* Survey123 for ArcGIS
+
+
 ### Useful Links to Products and Standards
 
 * Kobo Toolbox homepage: https://www.kobotoolbox.org/
