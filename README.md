@@ -9,7 +9,7 @@ Sergiy Radyakin, Thе Wоrld Bаnk, 2021.
 
 ```
 from kobo2suso import koboConvert
-koboConvert("kobo.xlsx","suso.json")
+koboConvert("kobo.xlsx","suso.zip")
 ```
 
 ### Compatibility Notes
@@ -26,9 +26,9 @@ koboConvert("kobo.xlsx","suso.json")
 - Variable names - transferred for some* question types, not validated against Survey Solutions requirements;
 - Hints - transferred as instructions for some* question types;
 - Text substitution placeholders are transferred, for example: "*How old is ${name}?*" will appear as "*How old is %name%?*"
-- Categories of single select questions - not transferred;
-- Enabling conditions - not transferred;
-- Validation conditions - not transferred;
+- Categories of single select questions - tentatively supported (if numeric, for non-numeric categories new numeric codes will be assigned);
+- Relevance (enabling) conditions - not transferred;
+- Restriction (validation) conditions - not transferred;
 - Calculated variables - not transferred (skipped).
 - Formatting - not transferred (not clear if supported in original files.)
 

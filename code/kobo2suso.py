@@ -1,9 +1,9 @@
 # Sergiy Radyakin, The World Bank, 2021
 
-import susoqx, json
+import json, os, tempfile, shutil
 from openpyxl import load_workbook, Workbook
 from openpyxl.utils import get_column_letter
-
+import susoqx
 
 global i
 global filemap
@@ -31,7 +31,7 @@ def is_integer(s):
         return False
     return True
 
-def postcategories(kobofile, choiceset):
+def postcategories(kobofile, choiceset, stagefolder):
     print("Categories: "+choiceset)
     if (choiceset in catdict):
         return catdict[choiceset]
@@ -39,7 +39,9 @@ def postcategories(kobofile, choiceset):
     f=susoqx.getguid()
     fcopy=f
     f=f.replace("-","")
-    writecategories(kobofile, choiceset, "C:/temp/kobo/out/Categories/"+f+".xlsx")
+    fn=os.path.join(stagefolder, "Categories", f+".xlsx")
+    writecategories(kobofile, choiceset, fn)
+    #"C:/temp/kobo/out/Categories/"+f+".xlsx"
     catdict[choiceset]=fcopy
     return fcopy
 
@@ -91,7 +93,7 @@ def writecategories(kobofile, choiceset, susofile):
       koborow=koborow+1
   suso.save(filename = susofile)
 
-def processgroup(kobofile, ws, name, title):
+def processgroup(kobofile, ws, name, title, stagefolder):
   global i
 
   G=susoqx.getgroup(title) # // todo: must also pass name
@@ -140,7 +142,7 @@ def processgroup(kobofile, ws, name, title):
       if (koboType1=="begin_group"):
         # // encountered a nested group
         print(koboName)
-        Z=processgroup(kobofile, ws, koboName, koboText)
+        Z=processgroup(kobofile, ws, koboName, koboText, stagefolder)
         C.append(Z)
 
       if (koboType1=="note"):
@@ -153,13 +155,14 @@ def processgroup(kobofile, ws, name, title):
             print("Error! Expected categories name for "+koboName)
             return
         singleQ=susoqx.getquestion(koboType1,koboName,koboText,koboHint)
-        singleQ['CategoriesId']=postcategories(kobofile,koboType2)
+        singleQ['CategoriesId']=postcategories(kobofile,koboType2,stagefolder)
         C.append(singleQ)
 
       if (koboType1 in ["text", "integer", "decimal", "date"]):
         C.append(susoqx.getquestion(koboType1,koboName,koboText,koboHint))
 
-      if (not(koboType1 in ["end_group", "begin_group", "note", "text", "integer", "decimal", "select_one", "date"])):
+      if (not(koboType1 in ["end_group", "begin_group", "note", "text",
+      "integer", "decimal", "select_one", "date"])):
         print("Encountered an unknown type: "+koboType1+", skipping")
 
   G['Children']=C
@@ -178,21 +181,23 @@ def koboConvert(koboname, susoname):
   print(">>> OK")
   i=i+1
 
-  qxdoc=susoqx.getqx("Q")
-  G=processgroup(koboname, ws, "Main", "MAIN")
-  qxdoc['Children'].append(G)
-  C=[]
-  for key, value in catdict.items():
-      print(key, value)
-      P={}
-      P["Id"]  =value
-      P["Name"]=key
-      C.append(P)
-  qxdoc['Categories']=C
+  with tempfile.TemporaryDirectory() as tmpdirname:
+      print('created temporary directory', tmpdirname)
+      os.mkdir(os.path.join(tmpdirname,"Categories"))
+      qxdoc=susoqx.getqx("Q")
+      G=processgroup(koboname, ws, "Main", "MAIN", tmpdirname)
+      qxdoc['Children'].append(G)
+      C=[]
+      for key, value in catdict.items():
+          pair={}
+          pair["Id"]  =value
+          pair["Name"]=key
+          C.append(pair)
+      qxdoc['Categories']=C
 
+      with open(os.path.join(tmpdirname, "document.json"), 'w') as outfile:
+        json.dump(qxdoc, outfile, indent=2)
 
-  with open(susoname, 'w') as outfile:
-    json.dump(qxdoc, outfile, indent=2)
-  # todo: pack into a zip-archive
+      shutil.make_archive(susoname,"zip",tmpdirname)
 
   # END OF FILE
