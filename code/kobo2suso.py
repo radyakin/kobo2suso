@@ -226,16 +226,21 @@ def processgroup(kobofile, ws, name, title, stagefolder):
 
       if (not(kobo['type1'] in ["end_group", "begin_group", "note", "text",
       "integer", "decimal", "select_one", "select_multiple", "date", "image"])):
-        print("Encountered an unknown type: "+kobo['type1']+", skipping")
+        print("!  >>>>>> Encountered an unknown type: "+kobo['type1']+", skipping")
 
   G['Children']=C
   return G
 
 def koboConvert(koboname, susoname):
+  print("Converter of questionnaires from XFORMS [Kobo Toolbox, ODK, SurveyCTO, Survey123] to Survey Solutions")
+  print("2021 Sergiy Radyakin, The World Bank")
+  print("Version 0.1")
+  print("-----------")
+
   global i
   print(koboname)
   wb = load_workbook(filename = koboname)
-  ws = wb.active
+  ws = wb["survey"]
   print(ws.title)
 
   buildfilemap(ws, "") # for the moment always take first language

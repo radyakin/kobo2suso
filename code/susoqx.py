@@ -159,6 +159,7 @@ def removeCRLF(s):
        g=result.replace("  "," ")
     return g
 
+
 def adaptsubst(s):
     # Use regular expressions to locate and adapt the substitution placeholders.
     # Anything resembling ${something} will be replaced with %something%
