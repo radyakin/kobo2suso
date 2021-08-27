@@ -214,6 +214,60 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         T=susoqx.gettext(kobo['text'])
         C.append(T)
 
+      if (kobo['type1']=="start"):
+        T=susoqx.gettext("[start] The designer of the original questionnaire has included a field to capture the date and time of the start of the interview. This is captured by Survey Solutions automatically and is exported with the main data in the interview__actions data file.")
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
+        C.append(T)
+
+      if (kobo['type1']=="end"):
+        T=susoqx.gettext("[end] The designer of the original questionnaire has included a field to capture the date and time of the end of the interview. This is captured by Survey Solutions automatically and is exported with the main data in the interview__actions data file.")
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
+        C.append(T)
+
+      if (kobo['type1']=="today"):
+        T=susoqx.gettext("[today]  The designer of the original questionnaire has included a field to capture the date of the interview. This is captured by Survey Solutions automatically and is exported with the main data in the interview__actions data file.")
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
+        C.append(T)
+
+      if (kobo['type1']=="deviceid"):
+        T=susoqx.gettext("[deviceid] The designer of the original questionnaire has included a field to capture the ID of the device used to create the form. For CAPI surveys use the login of the interviewer to find the corresponding device id in the interviewer's profile data.")
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
+        C.append(T)
+
+      if (kobo['type1']=="username"):
+        T=susoqx.gettext("[username] The designer of the original questionnaire has included a field to capture the username of the user submitting the form. In Survey Solutions this is captured always and is expoted with the main data in the interview__actions data file.")
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
+        C.append(T)
+
+      if (kobo['type1']=="simserial"):
+        T=susoqx.gettext("[simserial] The designer of the original questionnaire has included a field to capture the serial number of the SIM card on the device used to create the form. There is no equivalent in the Survey Solutions system. You may want to substitute for the device ID, interviewer ID, or seek another alternative.")
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
+        C.append(T)
+
+      if (kobo['type1']=="subscriberid"):
+        T=susoqx.gettext("[subscriberid] The designer of the original questionnaire has included a field to capture the subscriberid on the device used to create the form. There is no equivalent in the Survey Solutions system. You may want to substitute for the device ID, interviewer ID, or seek another alternative.")
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
+        C.append(T)
+
+      if (kobo['type1']=="phonenumber"):
+        T=susoqx.gettext("[phonenumber] The designer of the original questionnaire has included a field to capture the phone number of the device used to create the form. For CAPI surveys use the login of the interviewer to find the corresponding phone number (if specified) in the interviewer's profile data.")
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
+        C.append(T)
+
+      if (kobo['type1']=="audit"):
+        T=susoqx.gettext("[audit] The designer of the original questionnaire has included a flag to signal that paradata should be recorded. This is always-on in Survey Solutions and does not require any additional configuration.")
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
+        C.append(T)
+
       if (kobo['type1']=="select_one" or kobo['type1']=="select_multiple"):
         if (kobo['type2']==""):
             print("Error! Expected categories name for "+kobo['name'])
@@ -222,11 +276,13 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         selectQ['CategoriesId']=postcategories(kobofile,kobo['type2'],stagefolder)
         C.append(selectQ)
 
-      if (kobo['type1'] in ["text", "integer", "decimal", "date", "image", "geopoint"]):
+      if (kobo['type1'] in ["text", "integer", "decimal", "date", "barcode", "image", "audio", "geopoint"]):
         C.append(susoqx.getquestion(kobo))
 
       if (not(kobo['type1'] in ["end_group", "begin_group", "note", "text",
-      "integer", "decimal", "select_one", "select_multiple", "date", "image", "geopoint"])):
+      "integer", "decimal", "select_one", "select_multiple", "date", "barcode", "image", "audio", "geopoint",
+      "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "today", "end", "start"
+      ])):
         print("!  >>>>>> Encountered an unknown type: "+kobo['type1']+", skipping")
 
   G['Children']=C

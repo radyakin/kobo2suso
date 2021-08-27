@@ -1,5 +1,6 @@
 # Sergiy Radyakin, The World Bank, 2021
 import datetime, json, uuid, re
+import markdown
 
 
 def getguid():
@@ -127,12 +128,23 @@ def getquestion(kobo):
       # Date input.
       Q['$type']="DateTimeQuestion"
       Q['QuestionType']=5
+    if (kobo['type1']=="barcode"):
+      # Scan a barcode, requires the barcode scanner app to be installed.
+      Q['$type']="QRBarcodeQuestion"
+      Q['QuestionType']=10
+      Q['AnswerOrder']=2 # probably redundant
     if (kobo['type1']=="image"):
       # Take a picture or upload an image file.
       tokens=kobo['appearance'].split(" ")
       Q['$type']="MultimediaQuestion"
       Q['QuestionType']=11
       Q['IsSignature']="signature" in tokens
+    if (kobo['type1']=="audio"):
+      # Take an audio recording or upload an audio file.
+      Q['$type']="AudioQuestion"
+      Q['QuestionType']=13
+      Q['AnswerOrder']=2 # probably redundant
+      # Survey Solutions does not allow to regulate quality of the audio recording
     if (kobo['type1']=="geopoint"):
       # Collect a single GPS coordinate.
       tokens=kobo['appearance'].split(" ")
@@ -155,8 +167,12 @@ def gettext(title):
     T['HideIfDisabled']=False
     return T
 
+def demark(s):
+    result=markdown.markdown(s)
+    return result
 
 def removeCRLF(s):
+    s=demark(s)
     s=s.strip()
     result=s.replace("\r"," ")
     result=result.replace("\n"," ")
