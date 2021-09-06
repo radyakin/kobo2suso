@@ -1,6 +1,6 @@
 # Sergiy Radyakin, The World Bank, 2021
 
-import json, os, tempfile, shutil
+import json, os, re, shutil, tempfile
 from openpyxl import load_workbook, Workbook
 from openpyxl.utils import get_column_letter
 import susoqx
@@ -17,6 +17,7 @@ filemap["name"]=-1
 filemap["text"]=-1
 filemap["hint"]=-1
 filemap["appearance"]=-1
+filemap["calculation"]=-1
 catdict={}
 _verbose=False
 
@@ -52,6 +53,9 @@ def buildfilemap(ws, lng):
       if (filemap["appearance"]==-1 and c=="appearance"):
           filemap["appearance"]=j
           print("Located APPEARANCE in column "+str(j))
+      if (filemap["calculation"]==-1 and c=="calculation"):
+          filemap["calculation"]=j
+          print("Located CALCULATION in column "+str(j))
 
 def is_number(s):
     try:
@@ -89,7 +93,7 @@ def writecategories(kobofile, choiceset, susofile):
   kobo = load_workbook(filename = kobofile)
   kobosheet = kobo["choices"] # must be this specific name according to the format
   # a file has been spotted in the wild where "list_name" was specified as "list name"
-  assert(kobosheet.cell(column=1, row=1).value=="list_name")
+  assert(kobosheet.cell(column=1, row=1).value=="list_name" or kobosheet.cell(column=1, row=1).value=="list name")
   assert(kobosheet.cell(column=2, row=1).value=="name")
   assert(
     kobosheet.cell(column=3, row=1).value=="label"
@@ -140,6 +144,14 @@ def getkoboline(ws,i):
     if (kobo['type']==None):
       kobo['type']=""
 
+    # todo: this is a good place to replace alternative spellings
+    kobo['type']=re.sub("^select one from ","select_one ", kobo['type'])
+    kobo['type']=re.sub("^select one ","select_one ", kobo['type'])
+    kobo['type']=re.sub("^select1 ","select_one ", kobo['type'])
+
+    kobo['type']=re.sub("^select all that apply from ","select_multiple ", kobo['type'])
+    kobo['type']=re.sub("^select all that apply ","select_multiple ", kobo['type'])
+
     kobosplit=kobo['type'].split()
     kobo['type1']=""
     if (len(kobosplit)>0):
@@ -167,6 +179,13 @@ def getkoboline(ws,i):
       kobo['appearance']=ws.cell(column=filemap["appearance"],row=i).value # "signature", etc
       if (kobo['appearance']==None):
           kobo['appearance']=""
+
+    kobo['calculation']=""
+    if (filemap["calculation"]>0):
+      kobo['calculation']=ws.cell(column=filemap["calculation"],row=i).value # "calculation"
+      if (kobo['calculation']==None):
+        kobo['calculation']=""
+
     return kobo
 
 
@@ -196,79 +215,33 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         print("------------------------------------------------------------")
         pfx=""
 
-      print(pfx + kobo['type1'].ljust(20) + "  " + kobo['name'].ljust(28) + "  " + kobo['text'])
+      tag=kobo['type1']
+      print(pfx + tag.ljust(20) + "  " + kobo['name'].ljust(28) + "  " + kobo['text'])
 
-      if (kobo['type1']=="end_group"):
+      if (tag=="end_group"):
         # a file has been spotted in the wild where "end_group" is not accompanied by the group name
         break # // end of current group
 
-      if (kobo['type1']=="begin_group"):
+      if (tag=="begin_group"):
         # // encountered a nested group
         # print(kobo['name'])
         Z=processgroup(kobofile, ws, kobo['name'], kobo['text'], stagefolder)
         C.append(Z)
 
-      if (kobo['type1']=="note"):
+      if (tag=="note"):
         # // note maps to static text
         # Display a note on the screen, takes no input.
         T=susoqx.gettext(kobo['text'])
         C.append(T)
 
-      if (kobo['type1']=="start"):
-        T=susoqx.gettext("[start] The designer of the original questionnaire has included a field to capture the date and time of the start of the interview. This is captured by Survey Solutions automatically and is exported with the main data in the interview__actions data file.")
-        T['ConditionExpression']="false" # must be string - this is C# syntax
-        T['HideIfDisabled']=True
-        C.append(T)
+      if (tag in ["start","end","today","deviceid","username","simserial","subscriberid","phonenumber","audit"]):
+          msg=susoqx.getmetatext(tag)
+          T=susoqx.gettext(msg)
+          T['ConditionExpression']="false" # must be string - this is C# syntax
+          T['HideIfDisabled']=True
+          C.append(T)
 
-      if (kobo['type1']=="end"):
-        T=susoqx.gettext("[end] The designer of the original questionnaire has included a field to capture the date and time of the end of the interview. This is captured by Survey Solutions automatically and is exported with the main data in the interview__actions data file.")
-        T['ConditionExpression']="false" # must be string - this is C# syntax
-        T['HideIfDisabled']=True
-        C.append(T)
-
-      if (kobo['type1']=="today"):
-        T=susoqx.gettext("[today]  The designer of the original questionnaire has included a field to capture the date of the interview. This is captured by Survey Solutions automatically and is exported with the main data in the interview__actions data file.")
-        T['ConditionExpression']="false" # must be string - this is C# syntax
-        T['HideIfDisabled']=True
-        C.append(T)
-
-      if (kobo['type1']=="deviceid"):
-        T=susoqx.gettext("[deviceid] The designer of the original questionnaire has included a field to capture the ID of the device used to create the form. For CAPI surveys use the login of the interviewer to find the corresponding device id in the interviewer's profile data.")
-        T['ConditionExpression']="false" # must be string - this is C# syntax
-        T['HideIfDisabled']=True
-        C.append(T)
-
-      if (kobo['type1']=="username"):
-        T=susoqx.gettext("[username] The designer of the original questionnaire has included a field to capture the username of the user submitting the form. In Survey Solutions this is captured always and is expoted with the main data in the interview__actions data file.")
-        T['ConditionExpression']="false" # must be string - this is C# syntax
-        T['HideIfDisabled']=True
-        C.append(T)
-
-      if (kobo['type1']=="simserial"):
-        T=susoqx.gettext("[simserial] The designer of the original questionnaire has included a field to capture the serial number of the SIM card on the device used to create the form. There is no equivalent in the Survey Solutions system. You may want to substitute for the device ID, interviewer ID, or seek another alternative.")
-        T['ConditionExpression']="false" # must be string - this is C# syntax
-        T['HideIfDisabled']=True
-        C.append(T)
-
-      if (kobo['type1']=="subscriberid"):
-        T=susoqx.gettext("[subscriberid] The designer of the original questionnaire has included a field to capture the subscriberid on the device used to create the form. There is no equivalent in the Survey Solutions system. You may want to substitute for the device ID, interviewer ID, or seek another alternative.")
-        T['ConditionExpression']="false" # must be string - this is C# syntax
-        T['HideIfDisabled']=True
-        C.append(T)
-
-      if (kobo['type1']=="phonenumber"):
-        T=susoqx.gettext("[phonenumber] The designer of the original questionnaire has included a field to capture the phone number of the device used to create the form. For CAPI surveys use the login of the interviewer to find the corresponding phone number (if specified) in the interviewer's profile data.")
-        T['ConditionExpression']="false" # must be string - this is C# syntax
-        T['HideIfDisabled']=True
-        C.append(T)
-
-      if (kobo['type1']=="audit"):
-        T=susoqx.gettext("[audit] The designer of the original questionnaire has included a flag to signal that paradata should be recorded. This is always-on in Survey Solutions and does not require any additional configuration.")
-        T['ConditionExpression']="false" # must be string - this is C# syntax
-        T['HideIfDisabled']=True
-        C.append(T)
-
-      if (kobo['type1']=="select_one" or kobo['type1']=="select_multiple"):
+      if (tag=="select_one" or tag=="select_multiple"):
         if (kobo['type2']==""):
             print("Error! Expected categories name for "+kobo['name'])
             return
@@ -276,14 +249,18 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         selectQ['CategoriesId']=postcategories(kobofile,kobo['type2'],stagefolder)
         C.append(selectQ)
 
-      if (kobo['type1'] in ["text", "integer", "decimal", "date", "barcode", "image", "audio", "geopoint"]):
+      if (tag=="calculate"):
+          KV=susoqx.getvar(kobo)
+          C.append(KV)
+
+      if (tag in ["text", "integer", "decimal", "date", "barcode", "image", "audio", "geopoint"]):
         C.append(susoqx.getquestion(kobo))
 
-      if (not(kobo['type1'] in ["end_group", "begin_group", "note", "text",
+      if (not(tag in ["end_group", "begin_group", "note", "text", "calculate",
       "integer", "decimal", "select_one", "select_multiple", "date", "barcode", "image", "audio", "geopoint",
       "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "today", "end", "start"
       ])):
-        print("!  >>>>>> Encountered an unknown type: "+kobo['type1']+", skipping")
+        print("!  >>>>>> Encountered an unknown type: "+tag+", skipping")
 
   G['Children']=C
   return G
@@ -294,6 +271,7 @@ def koboConvert(koboname, susoname):
   print("Version 0.1")
   print("-----------")
 
+  # todo: for xls files consider https://stackoverflow.com/questions/9918646/how-to-convert-xls-to-xlsx
   global i
   print(koboname)
   wb = load_workbook(filename = koboname)
@@ -314,6 +292,7 @@ def koboConvert(koboname, susoname):
       os.mkdir(os.path.join(tmpdirname,"Categories"))
       qxdoc=susoqx.getqx("Q")
       G=processgroup(koboname, ws, "Main", "MAIN", tmpdirname)
+      print("Finished reading. Stopped at line ",i," of ",koboname)
       qxdoc['Children'].append(G)
       C=[]
       for key, value in catdict.items():

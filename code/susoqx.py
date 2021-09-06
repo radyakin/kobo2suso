@@ -153,6 +153,22 @@ def getquestion(kobo):
     return Q
 
 
+def getvar(kobo):
+    vname=kobo['name']
+    V={}
+    V['$type']="Variable"
+    V['PublicKey']=getguid()
+    V['Type']=1 # todo: need codes for variable types: 1=Long Integer;
+    V['Name']=vname
+    V['VariableName']=vname
+    V['Label']=vname
+    V['Children']=[]
+    V['DoNotExport']=False
+    print(kobo["calculation"])
+    V['Expression']= str(kobo["calculation"])
+    return V
+
+
 def gettext(title):
     # Proto for a static text
     T={}
@@ -195,6 +211,30 @@ def adaptsubst(s):
         # todo: make truncation aware of substitution, not to expose
         #       substitution placeholder carelessly if it falls on the boundary.
     return s
+
+
+def getmetatext(tag):
+      msg="UNKNOWN META"
+      if (tag=="start"):
+        msg="[start] The designer of the original questionnaire has included a field to capture the date and time of the start of the interview. This is captured by Survey Solutions automatically and is exported with the main data in the interview__actions data file."
+      if (tag=="end"):
+        msg="[end] The designer of the original questionnaire has included a field to capture the date and time of the end of the interview. This is captured by Survey Solutions automatically and is exported with the main data in the interview__actions data file."
+      if (tag=="today"):
+        msg="[today]  The designer of the original questionnaire has included a field to capture the date of the interview. This is captured by Survey Solutions automatically and is exported with the main data in the interview__actions data file."
+      if (tag=="deviceid"):
+        msg="[deviceid] The designer of the original questionnaire has included a field to capture the ID of the device used to create the form. For CAPI surveys use the login of the interviewer to find the corresponding device id in the interviewer's profile data."
+      if (tag=="username"):
+        msg="[username] The designer of the original questionnaire has included a field to capture the username of the user submitting the form. In Survey Solutions this is captured always and is expoted with the main data in the interview__actions data file."
+      if (tag=="simserial"):
+        msg="[simserial] The designer of the original questionnaire has included a field to capture the serial number of the SIM card on the device used to create the form. There is no equivalent in the Survey Solutions system. You may want to substitute for the device ID, interviewer ID, or seek another alternative."
+      if (tag=="subscriberid"):
+        msg="[subscriberid] The designer of the original questionnaire has included a field to capture the subscriberid on the device used to create the form. There is no equivalent in the Survey Solutions system. You may want to substitute for the device ID, interviewer ID, or seek another alternative."
+      if (tag=="phonenumber"):
+        msg="[phonenumber] The designer of the original questionnaire has included a field to capture the phone number of the device used to create the form. For CAPI surveys use the login of the interviewer to find the corresponding phone number (if specified) in the interviewer's profile data."
+      if (tag=="audit"):
+        msg="[audit] The designer of the original questionnaire has included a flag to signal that paradata should be recorded. This is always-on in Survey Solutions and does not require any additional configuration."
+      return msg
+
 
 
 #  END OF FILE
