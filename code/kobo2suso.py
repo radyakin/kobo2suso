@@ -137,20 +137,23 @@ def writecategories(kobofile, choiceset, susofile):
       koborow=koborow+1
   suso.save(filename = susofile)
 
+
 def getkoboline(ws,i):
     kobo={}
 
-    kobo['type']=ws.cell(column=filemap["type"],row=i).value # "type"
-    if (kobo['type']==None):
-      kobo['type']=""
+    for t in ["type", "name", "text", "hint", "appearance", "calculation"]:
+        kobo[t]=""
+        if (filemap[t]>0):
+            kobo[t]=ws.cell(column=filemap[t],row=i).value
+            if (kobo[t]==None):
+                kobo[t]=""
 
     # todo: this is a good place to replace alternative spellings
-    kobo['type']=re.sub("^select one from ","select_one ", kobo['type'])
-    kobo['type']=re.sub("^select one ","select_one ", kobo['type'])
-    kobo['type']=re.sub("^select1 ","select_one ", kobo['type'])
-
-    kobo['type']=re.sub("^select all that apply from ","select_multiple ", kobo['type'])
-    kobo['type']=re.sub("^select all that apply ","select_multiple ", kobo['type'])
+    kobo['type']=re.sub("^select one from ", "select_one ", kobo['type'])
+    kobo['type']=re.sub("^select one ", "select_one ", kobo['type'])
+    kobo['type']=re.sub("^select1 ", "select_one ", kobo['type'])
+    kobo['type']=re.sub("^select all that apply from ", "select_multiple ", kobo['type'])
+    kobo['type']=re.sub("^select all that apply ", "select_multiple ", kobo['type'])
 
     kobosplit=kobo['type'].split()
     kobo['type1']=""
@@ -159,32 +162,6 @@ def getkoboline(ws,i):
     kobo['type2']=""
     if (len(kobosplit)>1):
       kobo['type2']=kobosplit[1]
-
-    kobo['name']=ws.cell(column=filemap["name"],row=i).value # "name"
-    if (kobo['name']==None):
-      kobo['name']=""
-
-    kobo['text']=ws.cell(column=filemap["text"],row=i).value # "label", "label::English", etc
-    if (kobo['text']==None):
-      kobo['text']=""
-
-    kobo['hint']=""
-    if (filemap["hint"]>0):
-      kobo['hint']=ws.cell(column=filemap["hint"],row=i).value # "hint", "hint::English", etc
-      if (kobo['hint']==None):
-          kobo['hint']=""
-
-    kobo['appearance']=""
-    if (filemap["appearance"]>0):
-      kobo['appearance']=ws.cell(column=filemap["appearance"],row=i).value # "signature", etc
-      if (kobo['appearance']==None):
-          kobo['appearance']=""
-
-    kobo['calculation']=""
-    if (filemap["calculation"]>0):
-      kobo['calculation']=ws.cell(column=filemap["calculation"],row=i).value # "calculation"
-      if (kobo['calculation']==None):
-        kobo['calculation']=""
 
     return kobo
 
