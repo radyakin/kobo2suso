@@ -115,7 +115,7 @@ def writecategories(kobofile, choiceset, susofile):
   # todo: currently no checks are done to ensure no overlap
   #       of these new codes with codes in the choiceset
   newcode=100001
-  while(empty<2):
+  while(empty<10):  # more than 2 empty lines occur commonly in the files spotted in the wild
       listname=kobosheet.cell(column=1,row=koborow).value
       name    =kobosheet.cell(column=2,row=koborow).value
       label   =kobosheet.cell(column=3,row=koborow).value
@@ -125,14 +125,15 @@ def writecategories(kobofile, choiceset, susofile):
           empty=empty+1
       else:
           empty=0
-          if (listname==choiceset):
+          # print(listname)
+          if (str(listname).strip()==str(choiceset).strip()):
               #print(name, label)
               if (not is_integer(name)):
                   label=label+" ["+name+"]"
                   name=newcode
                   newcode=newcode+1
               susosheet.cell(column=1,row=susorow).value=name
-              susosheet.cell(column=2,row=susorow).value=label
+              susosheet.cell(column=2,row=susorow).value=label   ## ToDo: need to trim this to 250 chars
               susorow=susorow+1
       koborow=koborow+1
   suso.save(filename = susofile)
@@ -149,11 +150,19 @@ def getkoboline(ws,i):
                 kobo[t]=""
 
     # todo: this is a good place to replace alternative spellings
+    kobo['type']=re.sub("^begin group", "begin_group", kobo['type'])
+    kobo['type']=re.sub("^end group", "end_group", kobo['type'])
+
     kobo['type']=re.sub("^select one from ", "select_one ", kobo['type'])
     kobo['type']=re.sub("^select one ", "select_one ", kobo['type'])
     kobo['type']=re.sub("^select1 ", "select_one ", kobo['type'])
     kobo['type']=re.sub("^select all that apply from ", "select_multiple ", kobo['type'])
     kobo['type']=re.sub("^select all that apply ", "select_multiple ", kobo['type'])
+
+    ########## THE FOLLOWING CONVERTS ROSTERS INTO SUB-SECTIONS ################
+    kobo['type']=re.sub("^begin repeat", "begin_group", kobo['type'])
+    kobo['type']=re.sub("^end repeat", "end_group", kobo['type'])
+    ############################################################################
 
     kobosplit=kobo['type'].split()
     kobo['type1']=""
@@ -211,7 +220,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         T=susoqx.gettext(kobo['text'])
         C.append(T)
 
-      if (tag in ["start","end","today","deviceid","username","simserial","subscriberid","phonenumber","audit"]):
+      if (tag in ["start","end","today","deviceid","imei","username","simserial","subscriberid","phonenumber","audit"]):
           msg=susoqx.getmetatext(tag)
           T=susoqx.gettext(msg)
           T['ConditionExpression']="false" # must be string - this is C# syntax
@@ -235,7 +244,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
 
       if (not(tag in ["end_group", "begin_group", "note", "text", "calculate",
       "integer", "decimal", "select_one", "select_multiple", "date", "barcode", "image", "audio", "geopoint",
-      "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "today", "end", "start"
+      "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "imei", "today", "end", "start"
       ])):
         print("!  >>>>>> Encountered an unknown type: "+tag+", skipping")
 
@@ -275,7 +284,7 @@ def koboConvert(koboname, susoname):
       for key, value in catdict.items():
           pair={}
           pair["Id"]  =value
-          pair["Name"]=key
+          pair["Name"]="suso_"+key
           C.append(pair)
       qxdoc['Categories']=C
 
