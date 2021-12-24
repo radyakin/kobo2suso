@@ -9,6 +9,7 @@ global i
 global filemap
 global catdict
 global _verbose
+global varnameslist
 
 i=1
 filemap={}
@@ -20,6 +21,8 @@ filemap["appearance"]=-1
 filemap["calculation"]=-1
 catdict={}
 _verbose=False
+varnameslist=[]
+
 
 def buildfilemap(ws, lng):
     # scan the first line of the worksheet to determine indices for specific columns
@@ -177,6 +180,7 @@ def getkoboline(ws,i):
 
 def processgroup(kobofile, ws, name, title, stagefolder):
   global i
+  global varnameslist
 
   G=susoqx.getgroup(title) # // todo: must also pass name
   C=[]
@@ -196,6 +200,9 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         empty=empty+1
     else:
       empty=0
+      if (kobo['name']!="" and kobo['name']!=None):
+          varnameslist.append(kobo['name'])
+
       pfx="   "
       if (kobo['type1']=="begin_group"):
         print("------------------------------------------------------------")
@@ -293,4 +300,16 @@ def koboConvert(koboname, susoname):
 
       shutil.make_archive(susoname,"zip",tmpdirname)
 
+      unique=[]
+      dups=[]
+      for varname in varnameslist:
+        if varname not in unique:
+          unique.append(varname)
+        else:
+          dups.append(varname)
+
+      if (len(dups)>0):
+        print("Duplicates")
+        for varname in dups:
+          print(varname)
   # END OF FILE
