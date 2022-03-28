@@ -93,7 +93,7 @@ def postcategories(kobofile, choiceset, stagefolder):
 def writecategories(kobofile, choiceset, susofile):
   # write kobo choiceset as Survey Solutions categories
   # KOBO: list_name, name, label
-  kobo = load_workbook(filename = kobofile)
+  kobo = load_workbook(filename = kobofile, data_only = True)
   kobosheet = kobo["choices"] # must be this specific name according to the format
   # a file has been spotted in the wild where "list_name" was specified as "list name"
   assert(kobosheet.cell(column=1, row=1).value=="list_name" or kobosheet.cell(column=1, row=1).value=="list name")
