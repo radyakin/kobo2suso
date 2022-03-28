@@ -200,7 +200,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         empty=empty+1
     else:
       empty=0
-      if (kobo['name']!="" and kobo['name']!=None):
+      if (kobo['name']!="" and kobo['name']!=None and kobo['type1']!="end_group"):
           varnameslist.append(kobo['name'])
 
       pfx="   "
