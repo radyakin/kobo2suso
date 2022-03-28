@@ -267,7 +267,7 @@ def koboConvert(koboname, susoname):
   # todo: for xls files consider https://stackoverflow.com/questions/9918646/how-to-convert-xls-to-xlsx
   global i
   print(koboname)
-  wb = load_workbook(filename = koboname)
+  wb = load_workbook(filename = koboname, data_only = True)
   ws = wb["survey"]
   print(ws.title)
 
