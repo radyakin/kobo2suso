@@ -220,6 +220,8 @@ def processgroup(kobofile, ws, name, title, stagefolder):
       if (tag=="begin_group"):
         # // encountered a nested group
         # print(kobo['name'])
+        if (kobo['text']==None or kobo['text']==""):
+          kobo['text']=kobo['name']
         Z=processgroup(kobofile, ws, kobo['name'], kobo['text'], stagefolder)
         C.append(Z)
 
