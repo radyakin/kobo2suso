@@ -202,7 +202,7 @@ def adaptsubst(s):
     # Use regular expressions to locate and adapt the substitution placeholders.
     # Anything resembling ${something} will be replaced with %something%
     s=removeCRLF(s)
-    result = re.findall('\$\{.*?\}', s)
+    result = re.findall(r'\$\{.*?\}', s)
     for t in result:
         s=s.replace(t,"%"+t[2:-1]+"%")
     if (len(s)>500):
@@ -233,6 +233,8 @@ def getmetatext(tag):
         msg="[phonenumber] The designer of the original questionnaire has included a field to capture the phone number of the device used to create the form. For CAPI surveys use the login of the interviewer to find the corresponding phone number (if specified) in the interviewer's profile data."
       if (tag=="audit"):
         msg="[audit] The designer of the original questionnaire has included a flag to signal that paradata should be recorded. This is always-on in Survey Solutions and does not require any additional configuration."
+      if (tag=="caseid"):
+        msg="[caseid] The designer of the original questionnaire has included a field to hold the case ID. Survey Solutions holds the case ID in the variable interview__id and does not require any additional configuration."        
       return msg
 
 

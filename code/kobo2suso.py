@@ -231,7 +231,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         T=susoqx.gettext(kobo['text'])
         C.append(T)
 
-      if (tag in ["start","end","today","deviceid","imei","username","simserial","subscriberid","phonenumber","audit"]):
+      if (tag in ["start","end","today","deviceid","imei","username","simserial","subscriberid","phonenumber","audit","caseid"]):
           msg=susoqx.getmetatext(tag)
           T=susoqx.gettext(msg)
           T['ConditionExpression']="false" # must be string - this is C# syntax
@@ -255,7 +255,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
 
       if (not(tag in ["end_group", "begin_group", "note", "text", "calculate", "calculate_here",
       "integer", "decimal", "select_one", "select_multiple", "date", "datetime", "barcode", "image", "audio", "geopoint",
-      "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "imei", "today", "end", "start"
+      "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "imei", "today", "end", "start", "caseid"
       ])):
         print("!  >>>>>> Encountered an unknown type: "+tag+", skipping")
 
