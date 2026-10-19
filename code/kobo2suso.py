@@ -11,6 +11,8 @@ global catdict
 global _verbose
 global varnameslist
 
+elines=10
+
 i=1
 filemap={}
 filemap["type"]=-1
@@ -97,7 +99,7 @@ def writecategories(kobofile, choiceset, susofile):
   kobosheet = kobo["choices"] # must be this specific name according to the format
   # a file has been spotted in the wild where "list_name" was specified as "list name"
   assert(kobosheet.cell(column=1, row=1).value=="list_name" or kobosheet.cell(column=1, row=1).value=="list name")
-  assert(kobosheet.cell(column=2, row=1).value=="name")
+  assert(kobosheet.cell(column=2, row=1).value=="name" or (kobosheet.cell(column=2, row=1).value=="value"))
   assert(
     kobosheet.cell(column=3, row=1).value=="label"
     or
@@ -118,7 +120,7 @@ def writecategories(kobofile, choiceset, susofile):
   # todo: currently no checks are done to ensure no overlap
   #       of these new codes with codes in the choiceset
   newcode=100001
-  while(empty<10):  # more than 2 empty lines occur commonly in the files spotted in the wild
+  while(empty<elines):  # more than 2 empty lines occur commonly in the files spotted in the wild
       listname=kobosheet.cell(column=1,row=koborow).value
       name    =kobosheet.cell(column=2,row=koborow).value
       label   =kobosheet.cell(column=3,row=koborow).value
@@ -186,7 +188,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
   C=[]
 
   empty=0
-  while (empty<2):
+  while (1):
     kobo=getkoboline(ws,i)
     i=i+1
 
@@ -194,7 +196,7 @@ def processgroup(kobofile, ws, name, title, stagefolder):
     kobo['hint']=susoqx.adaptsubst(kobo['hint'])
 
     if (kobo['type']==None or kobo['type']==""):
-      if (empty==1):
+      if (empty>=elines):
         break
       else:
         empty=empty+1
