@@ -124,7 +124,7 @@ def getquestion(kobo):
       Q['QuestionType']=3
       Q['AreAnswersOrdered']=False
       Q['YesNoView']=False
-    if (kobo['type1']=="date"):
+    if (kobo['type1']=="date" or kobo['type1']=="datetime"):
       # Date input.
       Q['$type']="DateTimeQuestion"
       Q['QuestionType']=5

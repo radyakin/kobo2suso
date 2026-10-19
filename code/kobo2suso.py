@@ -250,11 +250,11 @@ def processgroup(kobofile, ws, name, title, stagefolder):
           KV=susoqx.getvar(kobo)
           C.append(KV)
 
-      if (tag in ["text", "integer", "decimal", "date", "barcode", "image", "audio", "geopoint"]):
+      if (tag in ["text", "integer", "decimal", "date", "datetime", "barcode", "image", "audio", "geopoint"]):
         C.append(susoqx.getquestion(kobo))
 
       if (not(tag in ["end_group", "begin_group", "note", "text", "calculate", "calculate_here",
-      "integer", "decimal", "select_one", "select_multiple", "date", "barcode", "image", "audio", "geopoint",
+      "integer", "decimal", "select_one", "select_multiple", "date", "datetime", "barcode", "image", "audio", "geopoint",
       "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "imei", "today", "end", "start"
       ])):
         print("!  >>>>>> Encountered an unknown type: "+tag+", skipping")
