@@ -244,14 +244,14 @@ def processgroup(kobofile, ws, name, title, stagefolder):
         selectQ['CategoriesId']=postcategories(kobofile,kobo['type2'],stagefolder)
         C.append(selectQ)
 
-      if (tag=="calculate"):
+      if (tag=="calculate" or tag=="calculate_here"):
           KV=susoqx.getvar(kobo)
           C.append(KV)
 
       if (tag in ["text", "integer", "decimal", "date", "barcode", "image", "audio", "geopoint"]):
         C.append(susoqx.getquestion(kobo))
 
-      if (not(tag in ["end_group", "begin_group", "note", "text", "calculate",
+      if (not(tag in ["end_group", "begin_group", "note", "text", "calculate", "calculate_here",
       "integer", "decimal", "select_one", "select_multiple", "date", "barcode", "image", "audio", "geopoint",
       "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "imei", "today", "end", "start"
       ])):
