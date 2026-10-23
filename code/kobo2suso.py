@@ -11,8 +11,6 @@ global catdict
 global _verbose
 global varnameslist
 
-elines=10
-
 i=1
 filemap = {
     "type": -1,
@@ -37,9 +35,13 @@ def read_headers(ws):
 
         c = str(c)
 
-        # keep first occurrence
-        if c not in headers:
-            headers[c] = j
+        if c in headers:
+            raise Exception(
+                f"Duplicate column '{c}' found in worksheet '{ws.title}', "
+                f"columns {headers[c]} and {j}"
+            )
+
+        headers[c] = j
 
     return headers
 
@@ -105,7 +107,8 @@ def is_integer(s):
         return False
     return True
 
-def postcategories(kobofile, choiceset, stagefolder, lng=""):
+def postcategories(kobofile, choiceset, stagefolder, lng="",
+    surveyrow=None):
 
     if (_verbose):
       print(" -- Categories: "+choiceset)
@@ -117,73 +120,156 @@ def postcategories(kobofile, choiceset, stagefolder, lng=""):
     fcopy=f
     f=f.replace("-","")
     fn=os.path.join(stagefolder, "Categories", f+".xlsx")
-    writecategories(kobofile, choiceset, fn, lng)
+    writecategories(kobofile, choiceset, fn, lng, surveyrow)
     catdict[choiceset]=fcopy
     return fcopy
 
-def writecategories(kobofile, choiceset, susofile, lng=""):
-  # write kobo choiceset as Survey Solutions categories
-  # KOBO: list_name, name, label
-  kobo = load_workbook(filename = kobofile, data_only = True)
-  kobosheet = kobo["choices"] # must be this specific name according to the format
-  # a file has been spotted in the wild where "list_name" was specified as "list name" - this seems to be contradicting the established convention.
+def writecategories(kobofile, choiceset, susofile, lng="",
+    surveyrow=None):
+    # write Kobo choiceset as Survey Solutions categories
+    # KOBO: list_name, name, label
 
-  headers = read_headers(kobosheet)
-  colmap = {
-    "list_name":headers.get("list_name",headers.get("list name",-1)), 
-    "name":headers.get("name", headers.get("value",-1)),
-    "label":find_column(headers, "label", lng)
-  }
-  
-  ## Stop processing if can't detect all necessary columns
-  if colmap["list_name"]==-1:
-    raise Exception("Column list_name is not defined for choices")
+    kobo = load_workbook(filename=kobofile, data_only=True)
+    kobosheet = kobo["choices"]
 
-  if colmap["name"]==-1:
-    raise Exception("Column name is not defined for choices")
-  
-  if colmap["label"]==-1:
-    raise Exception("Column label is not defined for choices")
+    # A file has been spotted in the wild where "list_name"
+    # was specified as "list name".
+    headers = read_headers(kobosheet)
 
-  if (_verbose):
-    print(" -- Writing to: "+susofile)
-  suso=Workbook()
-  susosheet = suso.active
-  susosheet.title = "Categories" # must be this specific name according to the format
-  susosheet.cell(column=1,row=1).value="id"
-  susosheet.cell(column=2,row=1).value="text"
-  susosheet.cell(column=3,row=1).value="parentid"
-  susosheet.column_dimensions[get_column_letter(2)].width=60
-  susorow=2
-  koborow=2
-  empty=0
-  # todo: currently no checks are done to ensure no overlap
-  #       of these new codes with codes in the choiceset
-  newcode=100001
-  while(empty<elines):  # more than 2 empty lines occur commonly in the files spotted in the wild
-      listname=kobosheet.cell(column=colmap["list_name"],row=koborow).value
-      name    =kobosheet.cell(column=colmap["name"],row=koborow).value
-      label   =kobosheet.cell(column=colmap["label"],row=koborow).value
-      label = "" if label is None else str(label)
-      if (listname is None):
-          listname=""
-      if (listname==""):
-          empty=empty+1
-      else:
-          empty=0
-          # print(listname)
-          if (str(listname).strip()==str(choiceset).strip()):
-              #print(name, label)
-              if (not is_integer(name)):
-                  label=(label + " [" + str(name) + "]").strip()
-                  name=newcode
-                  newcode=newcode+1
-              susosheet.cell(column=1,row=susorow).value=name
-              susosheet.cell(column=2,row=susorow).value=label   ## ToDo: need to trim this to 250 chars
-              susorow=susorow+1
-      koborow=koborow+1
-  suso.save(filename = susofile)
+    colmap = {
+        "list_name": headers.get(
+            "list_name",
+            headers.get("list name", -1)
+        ),
+        "name": headers.get(
+            "name",
+            headers.get("value", -1)
+        ),
+        "label": find_column(headers, "label", lng)
+    }
 
+    # Stop processing if necessary columns can't be detected.
+    if colmap["list_name"] == -1:
+        raise Exception(
+            "Column list_name is not defined for choices"
+        )
+
+    if colmap["name"] == -1:
+        raise Exception(
+            "Column name is not defined for choices"
+        )
+
+    if colmap["label"] == -1:
+        raise Exception(
+            "Column label is not defined for choices"
+        )
+
+    if _verbose:
+        print(" -- Writing to: " + susofile)
+
+    suso = Workbook()
+    susosheet = suso.active
+    susosheet.title = "Categories"
+
+    susosheet.cell(column=1, row=1).value = "id"
+    susosheet.cell(column=2, row=1).value = "text"
+    susosheet.cell(column=3, row=1).value = "parentid"
+
+    susosheet.column_dimensions[
+        get_column_letter(2)
+    ].width = 60
+
+    susorow = 2
+
+    # TODO: currently no checks are done to ensure no overlap
+    # of these generated codes with codes already in the choiceset.
+    newcode = 100001
+
+    matches = 0
+
+    # Scan the full used range of the choices worksheet.
+    # Blank rows have no special meaning and are simply ignored.
+    for koborow in range(2, kobosheet.max_row + 1):
+
+        listname = kobosheet.cell(
+            column=colmap["list_name"],
+            row=koborow
+        ).value
+
+        name = kobosheet.cell(
+            column=colmap["name"],
+            row=koborow
+        ).value
+
+        label = kobosheet.cell(
+            column=colmap["label"],
+            row=koborow
+        ).value
+
+        # Ignore rows without a choice-list name.
+        if listname is None:
+            continue
+
+        listname = str(listname).strip()
+
+        if listname == "":
+            continue
+
+        # Ignore choices belonging to other lists.
+        if listname != str(choiceset).strip():
+            continue
+
+        matches = matches + 1
+
+        # A category without a name/code cannot be converted safely.
+        if name is None or str(name).strip() == "":
+            raise Exception(
+                f"Error! [choices row: {koborow}] "
+                f"Category name is missing in choice list '{choiceset}'"
+            )
+
+        label = "" if label is None else str(label)
+
+        if not label.strip():
+          print(
+            f"!  >>>>>> [choices row: {koborow}] "
+            f"Category '{name}' in choice list '{choiceset}' "
+            "has no label"
+          )
+
+        # Survey Solutions requires numeric category codes.
+        # Preserve the original non-numeric value in the label.
+        if not is_integer(name):
+            print(
+                f"!  >>>>>> [choices row: {koborow}] "
+                f"Non-numeric category code '{name}' "
+                f"in choice list '{choiceset}' converted to {newcode}"
+            )
+            label = (
+                label + " [" + str(name) + "]"
+            ).strip()
+
+            name = newcode
+            newcode = newcode + 1
+
+        susosheet.cell(
+            column=1,
+            row=susorow
+        ).value = name
+
+        susosheet.cell(
+            column=2,
+            row=susorow
+        ).value = label
+
+        susorow = susorow + 1
+    if matches == 0:
+      raise Exception(
+        f"Error! [survey row: {surveyrow}] "
+        f"Choice list '{choiceset}' was referenced, "
+        "but no matching rows were found in the choices sheet"
+      )
+    suso.save(filename=susofile)
 
 def getkoboline(ws,i):
     
@@ -221,17 +307,33 @@ def getkoboline(ws,i):
 
     return kobo
 
-
 def processgroup(kobofile, ws, name, title, stagefolder, lng=""):
   global i
   global varnameslist
   global filemap
 
+  types_requiring_name = {
+    "begin_group",
+    "text",
+    "integer",
+    "decimal",
+    "select_one",
+    "select_multiple",
+    "date",
+    "datetime",
+    "barcode",
+    "image",
+    "audio",
+    "geopoint",
+    "calculate",
+    "calculate_here"
+  }
+
   G=susoqx.getgroup(title) # // todo: must also pass name
   C=[]
 
-  empty=0
-  while (1):
+  while i<=ws.max_row:
+    koborow=i
     kobo=getkoboline(ws,i)
     i=i+1
 
@@ -239,68 +341,75 @@ def processgroup(kobofile, ws, name, title, stagefolder, lng=""):
     kobo['hint']=susoqx.adaptsubst(kobo['hint'])
 
     if (kobo['type']==""):
-      if (empty>=elines):
-        break
-      else:
-        empty=empty+1
-    else:
-      empty=0
-      if (kobo['name']!="" and kobo['type1']!="end_group"):
-          varnameslist.append(kobo['name'])
+      continue
 
-      pfx="   "
-      if (kobo['type1']=="begin_group"):
-        print("------------------------------------------------------------")
-        pfx=""
+    if (kobo['name']!="" and kobo['type1']!="end_group"):
+        varnameslist.append((kobo['name'], koborow))
 
-      tag=kobo['type1']
-      print(pfx + tag.ljust(20) + "  " + kobo['name'].ljust(28) + "  " + kobo['text'])
+    pfx="   "
+    if (kobo['type1']=="begin_group"):
+      print("------------------------------------------------------------")
+      pfx=""
 
-      if (tag=="end_group"):
-        # a file has been spotted in the wild where "end_group" is not accompanied by the group name
-        break # // end of current group
+    tag=kobo['type1']
+    if tag in types_requiring_name and not kobo['name'].strip():
+        raise Exception(
+            f"Error! [survey row: {koborow}] "
+            f"Variable name is missing for type '{tag}'"
+        )
+    print(pfx + tag.ljust(20) + "  " + kobo['name'].ljust(28) + "  " + kobo['text'])
 
-      if (tag=="begin_group"):
-        # // encountered a nested group
-        # print(kobo['name'])
-        if (kobo['text']==""):
-          kobo['text']=kobo['name']
-        Z=processgroup(kobofile, ws, kobo['name'], kobo['text'], stagefolder, lng)
-        C.append(Z)
+    if (tag=="end_group"):
+      # a file has been spotted in the wild where "end_group" is not accompanied by the group name
+      break # // end of current group
 
-      if (tag=="note"):
-        # // note maps to static text
-        # Display a note on the screen, takes no input.
-        T=susoqx.gettext(kobo['text'])
+    if (tag=="begin_group"):
+      # // encountered a nested group
+      # print(kobo['name'])
+      if (kobo['text']==""):
+        kobo['text']=kobo['name']
+      Z=processgroup(kobofile, ws, kobo['name'], kobo['text'], stagefolder, lng)
+      C.append(Z)
+
+    if (tag=="note"):
+      # // note maps to static text
+      # Display a note on the screen, takes no input.
+      T=susoqx.gettext(kobo['text'])
+      C.append(T)
+
+    if (tag in ["start","end","today","deviceid","imei","username","simserial","subscriberid","phonenumber","audit","caseid"]):
+        msg=susoqx.getmetatext(tag)
+        T=susoqx.gettext(msg)
+        T['ConditionExpression']="false" # must be string - this is C# syntax
+        T['HideIfDisabled']=True
         C.append(T)
 
-      if (tag in ["start","end","today","deviceid","imei","username","simserial","subscriberid","phonenumber","audit","caseid"]):
-          msg=susoqx.getmetatext(tag)
-          T=susoqx.gettext(msg)
-          T['ConditionExpression']="false" # must be string - this is C# syntax
-          T['HideIfDisabled']=True
-          C.append(T)
+    if (tag=="select_one" or tag=="select_multiple"):
+      if (kobo['type2']==""):
+          raise Exception(
+            f"Error! [survey row: {koborow}] "
+            f"Expected categories name for {kobo['name']}"
+          )
+          
+      selectQ=susoqx.getquestion(kobo)
+      selectQ['CategoriesId']=postcategories(kobofile,kobo['type2'],stagefolder,lng,koborow)
+      C.append(selectQ)
 
-      if (tag=="select_one" or tag=="select_multiple"):
-        if (kobo['type2']==""):
-            raise Exception("Error! Expected categories name for "+kobo['name'])
-            
-        selectQ=susoqx.getquestion(kobo)
-        selectQ['CategoriesId']=postcategories(kobofile,kobo['type2'],stagefolder,lng)
-        C.append(selectQ)
+    if (tag=="calculate" or tag=="calculate_here"):
+        KV=susoqx.getvar(kobo)
+        C.append(KV)
 
-      if (tag=="calculate" or tag=="calculate_here"):
-          KV=susoqx.getvar(kobo)
-          C.append(KV)
+    if (tag in ["text", "integer", "decimal", "date", "datetime", "barcode", "image", "audio", "geopoint"]):
+      C.append(susoqx.getquestion(kobo))
 
-      if (tag in ["text", "integer", "decimal", "date", "datetime", "barcode", "image", "audio", "geopoint"]):
-        C.append(susoqx.getquestion(kobo))
-
-      if (not(tag in ["end_group", "begin_group", "note", "text", "calculate", "calculate_here",
-      "integer", "decimal", "select_one", "select_multiple", "date", "datetime", "barcode", "image", "audio", "geopoint",
-      "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "imei", "today", "end", "start", "caseid"
-      ])):
-        print("!  >>>>>> Encountered an unknown type: "+tag+", skipping")
+    if (not(tag in ["end_group", "begin_group", "note", "text", "calculate", "calculate_here",
+    "integer", "decimal", "select_one", "select_multiple", "date", "datetime", "barcode", "image", "audio", "geopoint",
+    "audit", "phonenumber", "subscriberid", "simserial", "username", "deviceid", "imei", "today", "end", "start", "caseid"
+    ])):
+      print(
+        f"!  >>>>>> [survey row: {koborow}] "
+        f"Encountered an unknown type: {tag}, skipping"
+      )
 
   G['Children']=C
   return G
@@ -316,6 +425,33 @@ def koboConvert(koboname, susoname, lng=""):
   global i
   print(koboname)
   wb = load_workbook(filename = koboname, data_only = True)
+
+  required_sheets = ["survey", "choices"]
+  optional_sheets = ["settings"]
+
+  missing_required = [
+        sheet for sheet in required_sheets
+        if sheet not in wb.sheetnames
+  ]
+
+  missing_optional = [
+        sheet for sheet in optional_sheets
+        if sheet not in wb.sheetnames
+  ]
+
+  for sheet in missing_required:
+        print(f"!  >>>>>> Required worksheet '{sheet}' is missing")
+
+  for sheet in missing_optional:
+        print(f"!  >>>>>> Optional worksheet '{sheet}' is missing")
+
+  if missing_required:
+        raise Exception(
+            "Required worksheet(s) missing: "
+            + ", ".join(missing_required)
+            + ". Conversion aborted."
+        )
+
   ws = wb["survey"]
   print(ws.title)
 
@@ -343,21 +479,32 @@ def koboConvert(koboname, susoname, lng=""):
           C.append(pair)
       qxdoc['Categories']=C
 
+      ### Check for duplicate variable names
+      seen = {}
+      dups = []
+
+      for varname, row in varnameslist:
+          if varname in seen:
+              dups.append((varname, seen[varname], row))
+          else:
+              seen[varname] = row
+
+      if len(dups) > 0:
+          print("Duplicate variable names detected:")
+          print("----------------------------------")
+          for varname, firstrow, row in dups:
+              print(
+                  f"!  >>>>>> Variable '{varname}' "
+                  f"is duplicated on survey rows "
+                  f"{firstrow} and {row}"
+              )
+          raise Exception(
+            "Duplicate variable names detected. Conversion aborted."
+          )
+
       with open(os.path.join(tmpdirname, "document.json"), 'w') as outfile:
         json.dump(qxdoc, outfile, indent=2)
 
       shutil.make_archive(susoname,"zip",tmpdirname)
 
-      unique=[]
-      dups=[]
-      for varname in varnameslist:
-        if varname not in unique:
-          unique.append(varname)
-        else:
-          dups.append(varname)
-
-      if (len(dups)>0):
-        print("Duplicates")
-        for varname in dups:
-          print(varname)
   # END OF FILE
