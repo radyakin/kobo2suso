@@ -181,8 +181,45 @@ def writecategories(kobofile, choiceset, susofile, lng="",
 
     susorow = 2
 
-    # TODO: currently no checks are done to ensure no overlap
-    # of these generated codes with codes already in the choiceset.
+    # Collect all numeric codes already used in this choice list.
+    # Also detect duplicate source codes before conversion begins.
+    usedcodes = {}
+
+    for koborow in range(2, kobosheet.max_row + 1):
+
+        listname = kobosheet.cell(
+            column=colmap["list_name"],
+            row=koborow
+        ).value
+
+        if listname is None:
+            continue
+
+        if str(listname).strip() != str(choiceset).strip():
+            continue
+
+        name = kobosheet.cell(
+            column=colmap["name"],
+            row=koborow
+        ).value
+
+        # Missing names are handled in the main processing pass.
+        if name is None or str(name).strip() == "":
+            continue
+
+        if is_integer(name):
+            code = int(float(name))
+
+            if code in usedcodes:
+                raise Exception(
+                    f"Error! Duplicate category code '{code}' "
+                    f"in choice list '{choiceset}' on choices rows "
+                    f"{usedcodes[code]} and {koborow}. "
+                    "Conversion aborted."
+                )
+
+            usedcodes[code] = koborow
+
     newcode = 100001
 
     matches = 0
@@ -219,7 +256,7 @@ def writecategories(kobofile, choiceset, susofile, lng="",
         if listname != str(choiceset).strip():
             continue
 
-        matches = matches + 1
+        matches += 1
 
         # A category without a name/code cannot be converted safely.
         if name is None or str(name).strip() == "":
@@ -231,26 +268,33 @@ def writecategories(kobofile, choiceset, susofile, lng="",
         label = "" if label is None else str(label)
 
         if not label.strip():
-          print(
-            f"!  >>>>>> [choices row: {koborow}] "
-            f"Category '{name}' in choice list '{choiceset}' "
-            "has no label"
-          )
+            print(
+                f"!  >>>>>> [choices row: {koborow}] "
+                f"Category '{name}' in choice list '{choiceset}' "
+                "has no label"
+            )
 
         # Survey Solutions requires numeric category codes.
         # Preserve the original non-numeric value in the label.
         if not is_integer(name):
+
+            # Find the next generated code that is not already used.
+            while newcode in usedcodes:
+                newcode += 1
+
             print(
                 f"!  >>>>>> [choices row: {koborow}] "
                 f"Non-numeric category code '{name}' "
                 f"in choice list '{choiceset}' converted to {newcode}"
             )
+
             label = (
                 label + " [" + str(name) + "]"
             ).strip()
 
             name = newcode
-            newcode = newcode + 1
+            usedcodes[newcode] = koborow
+            newcode += 1
 
         susosheet.cell(
             column=1,
@@ -262,13 +306,15 @@ def writecategories(kobofile, choiceset, susofile, lng="",
             row=susorow
         ).value = label
 
-        susorow = susorow + 1
+        susorow += 1
+
     if matches == 0:
-      raise Exception(
-        f"Error! [survey row: {surveyrow}] "
-        f"Choice list '{choiceset}' was referenced, "
-        "but no matching rows were found in the choices sheet"
-      )
+        raise Exception(
+            f"Error! [survey row: {surveyrow}] "
+            f"Choice list '{choiceset}' was referenced, "
+            "but no matching rows were found in the choices sheet"
+        )
+
     suso.save(filename=susofile)
 
 def getkoboline(ws,i):
